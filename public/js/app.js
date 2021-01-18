@@ -1989,6 +1989,7 @@ module.exports = {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _bus__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../bus */ "./resources/js/bus.js");
 //
 //
 //
@@ -2002,9 +2003,15 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 
+
 /* harmony default export */ __webpack_exports__["default"] = ({
   mounted: function mounted() {
+    var _this = this;
+
     this.loadPosts();
+    _bus__WEBPACK_IMPORTED_MODULE_1__["default"].$on('post.created', function (post) {
+      return _this.posts.data.unshift(post);
+    });
   },
   data: function data() {
     return {
@@ -2015,12 +2022,12 @@ __webpack_require__.r(__webpack_exports__);
   },
   methods: {
     loadPosts: function loadPosts() {
-      var _this = this;
+      var _this2 = this;
 
       axios__WEBPACK_IMPORTED_MODULE_0___default.a.get('/api/posts').then(function (response) {
-        return _this.posts = response.data;
+        return _this2.posts = response.data;
       })["catch"](function (response) {
-        return _this.$vToastify.error('Falha ao carregar os posts', 'Erro');
+        return _this2.$vToastify.error('Falha ao carregar os posts', 'Erro');
       });
     }
   }
@@ -42069,11 +42076,13 @@ module.exports = yeast;
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.common.js");
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(vue__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _bus__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./bus */ "./resources/js/bus.js");
+
 
 window.Echo.channel('laravel_database_post-created').listen('PostCreated', function (e) {
-  console.log(e);
   console.log(e.post);
-  vue__WEBPACK_IMPORTED_MODULE_0___default.a.$vToastify.success("T\xEDtulo do post ".concat(e.post.title), 'Novo Post');
+  _bus__WEBPACK_IMPORTED_MODULE_1__["default"].$emit('post.created', e.post);
+  vue__WEBPACK_IMPORTED_MODULE_0___default.a.$vToastify.success("T\xEDtulo do post ".concat(e.post.name), 'Novo Post');
 });
 
 /***/ }),
@@ -42144,6 +42153,22 @@ window.Echo = new laravel_echo__WEBPACK_IMPORTED_MODULE_0__["default"]({
 });
 
 __webpack_require__(/*! ./Echo */ "./resources/js/Echo.js");
+
+/***/ }),
+
+/***/ "./resources/js/bus.js":
+/*!*****************************!*\
+  !*** ./resources/js/bus.js ***!
+  \*****************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.common.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(vue__WEBPACK_IMPORTED_MODULE_0__);
+
+/* harmony default export */ __webpack_exports__["default"] = (new vue__WEBPACK_IMPORTED_MODULE_0___default.a());
 
 /***/ }),
 

@@ -12,10 +12,13 @@
 
 <script>
 import axios from 'axios'
+import Bus from '../../bus'
 
 export default {
     mounted() {
         this.loadPosts()
+
+        Bus.$on('post.created', post => this.posts.data.unshift(post))
     },
 
     data() {
