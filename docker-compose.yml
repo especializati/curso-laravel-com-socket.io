@@ -1,74 +1,82 @@
-# For more information: https://laravel.com/docs/sail
-version: '3'
+version: "3.7"
+
 services:
-    laravel.test:
-        build:
-            context: ./vendor/laravel/sail/runtimes/8.0
-            dockerfile: Dockerfile
-            args:
-                WWWGROUP: '${WWWGROUP}'
-        image: sail-8.0/app
-        ports:
-            - '${APP_PORT:-80}:80'
-        environment:
-            WWWUSER: '${WWWUSER}'
-            LARAVEL_SAIL: 1
+    # image project
+    app:
+        image: especializati/laravel-app
+        restart: unless-stopped
+        working_dir: /var/www/
         volumes:
-            - '.:/var/www/html'
-        networks:
-            - sail
+            - ./:/var/www
         depends_on:
-            - mysql
             - redis
-            # - selenium
-    # selenium:
-    #     image: 'selenium/standalone-chrome'
-    #     volumes:
-    #         - '/dev/shm:/dev/shm'
-    #     networks:
-    #         - sail
-    #     depends_on:
-    #         - laravel.test
+        networks:
+            - laravel
+
+    # nginx
+    nginx:
+        image: nginx:alpine
+        restart: unless-stopped
+        ports:
+            - "8989:80"
+        volumes:
+            - ./:/var/www
+            - ./docker/nginx/:/etc/nginx/conf.d/
+        networks:
+            - laravel
+
+    # db mysql
     mysql:
-        image: 'mysql:8.0'
-        ports:
-            - '${FORWARD_DB_PORT:-3306}:3306'
+        image: mysql:5.7.22
+        restart: unless-stopped
         environment:
-            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_DATABASE: '${DB_DATABASE}'
-            MYSQL_USER: '${DB_USERNAME}'
-            MYSQL_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_USER: ${DB_USERNAME}
         volumes:
-            - 'sailmysql:/var/lib/mysql'
+            - ./.docker/mysql/dbdata:/var/lib/mysql
+        ports:
+            - "3388:3306"
         networks:
-            - sail
+            - laravel
+
+    # queue
+    queue:
+        image: especializati/laravel-app
+        restart: unless-stopped
+        command: "php artisan queue:work"
+        volumes:
+            - ./:/var/www
+        depends_on:
+            - redis
+            - app
+        networks:
+            - laravel
+
+    # redis
     redis:
-        image: 'redis:alpine'
+        image: redis:latest
         ports:
-            - '${FORWARD_REDIS_PORT:-6379}:6379'
+            - "6379:6379"
+        networks:
+            - laravel
+
+
+    laravel-echo-server:
+        build:
+            context: ./docker/laravel-echo-server
+            args:
+              - CHANGE_SOURCE=false
         volumes:
-            - 'sailredis:/data'
-        networks:
-            - sail
-    # memcached:
-    #     image: 'memcached:alpine'
-    #     ports:
-    #         - '11211:11211'
-    #     networks:
-    #         - sail
-    mailhog:
-        image: 'mailhog/mailhog:latest'
+            - ./docker/laravel-echo-server/laravel-echo-server.json:/app/laravel-echo-server.json
         ports:
-            - 1025:1025
-            - 8025:8025
+            - "6001:6001"
+        links:
+          - redis
         networks:
-            - sail
+            - laravel
+
 networks:
-    sail:
+    laravel:
         driver: bridge
-volumes:
-    sailmysql:
-        driver: local
-    sailredis:
-        driver: local
